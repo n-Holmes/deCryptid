@@ -25,7 +25,6 @@ class Game:
             raise ValueError("player_count must be be between 3 and 5.")
 
         self.board = board
-        self.players = 
 
         self.terrains = {terrain: set() for terrain in TERRAINS.values()}
         self.animals = {animal: set() for animal in ANIMALS.values()}
@@ -34,6 +33,8 @@ class Game:
 
         self.clues = {}
         self._get_clues()
+
+        self.players = [Player(self.clues) for _ in range(player_count)]
 
     def _get_clues(self):
         """Assemble the name and region for each possible clue."""
@@ -101,6 +102,60 @@ class Game:
 
 
 class Player:
-    """Stores information on the clues given by a player."""
-    def __init__(self, positives=None, negatives=None):
-        
+    """Stores information on the clues given by a player.
+
+    Args:
+        clues: A dictionary of possible clues and their poistion sets.
+        positives: Positions marked positive by the player.
+        negatives: Positions marked negative by the player.
+        known_clue: Storage for the case that the clue is known.
+
+    """
+
+    def __init__(self, clues, positives=None, negatives=None, known_clue=None):
+        self.clues = clues
+
+        if known_clue is not None and known_clue not in clues:
+            raise ValueError("known_clue must be an element of clues")
+        self.known_clue = known_clue
+
+        if positives is None:
+            self.positives = set()
+        else:
+            self.positives = set(positives)
+
+        if negatives is None:
+            self.negatives = set()
+        else:
+            self.negatives = set(negatives)
+
+        self.restrict_clues()
+
+    def restrict_clues(self):
+        """Restrict clue set to match positives and negatives.
+        Ignores known_clue as storing publicly available knowledge is useful.
+        """
+        removals = []
+        for clue, region in self.clues:
+            if self.negatives & region or self.positives - region:
+                removals.append(clue)
+
+        for clue in removals:
+            self.clues.pop(clue)
+
+        if len(self.clues) == 1:
+            self.known_clue = list(self.clues)[0]
+
+    def add_clue(self, position, clue_type):
+        """Update the player state given a new clue.
+
+        Args:
+            position: The position that the clue was given at.
+            clue_type: Boolean, True for a positive clue, False for negative.
+        """
+        if clue_type:
+            self.positives.add(position)
+        else:
+            self.negatives.add(position)
+
+        self.restrict_clues()
