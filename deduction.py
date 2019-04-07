@@ -2,6 +2,7 @@
 
 
 from itertools import combinations
+import random
 
 from gameboard import ANIMALS, STRUCTURES, TERRAINS
 import hextools
@@ -16,7 +17,7 @@ class Game:
         player_count: Integer number of players (3, 4 or 5).
     """
 
-    def __init__(self, board, player_count):
+    def __init__(self, board, player_count, known_clues=None):
         if not isinstance(board, hextools.HexGrid):
             raise TypeError("board must be an instance of hextools.HexGrid.")
         if not isinstance(player_count, int):
@@ -25,6 +26,7 @@ class Game:
             raise ValueError("player_count must be be between 3 and 5.")
 
         self.board = board
+        self.tile_set = {hextools.cubic(*pos) for pos, tile in self.board}
 
         self.terrains = {terrain: set() for terrain in TERRAINS.values()}
         self.animals = {animal: set() for animal in ANIMALS.values()}
@@ -34,14 +36,18 @@ class Game:
         self.clues = {}
         self._get_clues()
 
-        self.players = [Player(self.clues) for _ in range(player_count)]
+        if known_clues is None:
+            self.players = [Player(self, i) for i in range(player_count)]
+        else:
+            self.players = [
+                Player(self, i, known_clue=known_clues[i])
+                for i in range(player_count)
+            ]
 
     def _get_clues(self):
         """Assemble the name and region for each possible clue."""
-        tile_set = set()
         for pos, tile in self.board:
             pos = hextools.cubic(*pos)
-            tile_set.add(pos)
 
             self.terrains[tile.terrain].add(pos)
 
@@ -91,31 +97,39 @@ class Game:
 
         # Restrict all clues to the board
         for clue in self.clues:
-            self.clues[clue] = self.clues[clue] & tile_set
+            self.clues[clue] = self.clues[clue] & self.tile_set
 
         # Negative clues if playing in advanced mode
         if self.colors['black']:
             positives = list(self.clues.items())
             for clue, tiles in positives:
                 negation = 'not ' + clue
-                self.clues[negation] = tile_set - tiles
+                self.clues[negation] = self.tile_set - tiles
 
 
 class Player:
     """Stores information on the clues given by a player.
 
     Args:
-        clues: A dictionary of possible clues and their poistion sets.
+        game: The Game object to associate the Player with.
+        player_number: Integer - which player this is.
         positives: Positions marked positive by the player.
         negatives: Positions marked negative by the player.
         known_clue: Storage for the case that the clue is known.
 
     """
 
-    def __init__(self, clues, positives=None, negatives=None, known_clue=None):
-        self.clues = clues
+    # pylint: disable=too-many-arguments
+    def __init__(self, game, player_number, positives=None,
+                 negatives=None, known_clue=None):
+        self.game = game
+        self.clues = game.clues.copy()
+        self.number = player_number
 
-        if known_clue is not None and known_clue not in clues:
+        if known_clue is not None and known_clue not in self.clues:
+            print('known', known_clue)
+            for clue in self.clues:
+                print(clue)
             raise ValueError("known_clue must be an element of clues")
         self.known_clue = known_clue
 
@@ -159,3 +173,51 @@ class Player:
             self.negatives.add(position)
 
         self.restrict_clues()
+
+    def play_random(self, clue_type=False):
+        """Play a random, correct piece of the specified type.
+        If the player's clue is not known this should cause an error.
+
+        Args:
+            clue_type: Boolean to determine whether the played piece
+                should be positive or negative.
+
+        Raises:
+            UnknownClueError: If the player's clue is not known, then
+                we cannot know where it can legally play.
+            NoLegalPlayError: If there are no legal positions to play in.
+        """
+        if self.known_clue is None:
+            raise UnknownClueError('Cannot play without known clue.')
+
+        region = self.clues[self.known_clue]
+        if not clue_type:
+            region = self.game.tile_set - region
+
+        possible_tiles = [
+            tile
+            for tile in region
+            if False not in self.game.board.gethex(tile).players
+            # Negative clue locks space
+            and tile not in self.positives | self.negatives
+        ]
+        if not possible_tiles:
+            raise NoLegalPlayError
+
+        play = random.choice(possible_tiles)
+        self.game.board.gethex(play).players[self.number] = clue_type
+
+        if clue_type:
+            self.positives.add(play)
+        else:
+            self.negatives.add(play)
+
+        self.restrict_clues()
+
+
+class UnknownClueError(Exception):
+    pass
+
+
+class NoLegalPlayError(Exception):
+    pass
