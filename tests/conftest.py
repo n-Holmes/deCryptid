@@ -6,9 +6,12 @@ import gameboard
 @pytest.fixture
 def board():
     boardstring = '1r42635'
-    structures = ((4, 1), (3, 8), (10, 7), (0, 3),
-                  (9, 0), (5, 3), (0, 4), (2, 5))
-    clues = ['not1Mountain', 'not1Desert', 'Water|Desert', 'not3Blue']
+    structures = ((4, -1), (3, 7), (10, 2), (0, 3),
+                  (9, -4), (5, 1), (0, 4), (2, 4))
+    clues = ['not within one space of a mountain',
+             'not within one space of a desert',
+             'on water or desert',
+             'not within three spaces of a blue structure']
     solution = (9, 8)
 
     game = gameboard.assemble_board(boardstring, structures)
@@ -17,11 +20,13 @@ def board():
 
 @pytest.fixture
 def board_basic():
-    boardstring = '5246r31'
-    structures = ((1, 0), (10, 6), (5, 1), (6, 4), (2, 0), (3, 2))
-    clues = ['within two of bear', 'on water or mountain',
-             'on desert or mountain', 'within one of forest']
-    solution = None
+    boardstring = '31r254r6r'
+    structures = ((4, 2), (4, 1), (9, -3), (7, 5), (4, -2), (1, 6))
+    clues = ['within two spaces of a shack',
+             'within three spaces of a white structure',
+             'on water or forest',
+             'within three spaces of a green structure']
+    solution = (6, -1)
 
     game = gameboard.assemble_board(boardstring, structures)
     return game

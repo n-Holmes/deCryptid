@@ -12,7 +12,7 @@ def test_clue_count_advanced(board):
     When setting up a Game object,
     Then 48 clues should be generated.
     """
-    game = deduction.Game(board)
+    game = deduction.Game(board, 4)
     assert(len(game.clues)) == 48
 
 @pytest.mark.deduce
@@ -22,5 +22,5 @@ def test_clue_count_basic(board_basic):
     When setting up a Game object,
     Then 23 clues should be generated.
     """
-    game = deduction.Game(board_basic)
+    game = deduction.Game(board_basic, 4)
     assert(len(game.clues)) == 23

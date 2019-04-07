@@ -60,7 +60,7 @@ class Game:
 
         # Within 1 of a terrain
         for terrain, region in self.terrains.items():
-            clue = f'within one space of {terrain}'
+            clue = f'within one space of a {terrain}'
             self.clues[clue] = hextools.expand(region, 1)
 
         # Within 1 of animals
@@ -136,7 +136,7 @@ class Player:
         Ignores known_clue as storing publicly available knowledge is useful.
         """
         removals = []
-        for clue, region in self.clues:
+        for clue, region in self.clues.items():
             if self.negatives & region or self.positives - region:
                 removals.append(clue)
 

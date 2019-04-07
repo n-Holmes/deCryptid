@@ -1,3 +1,5 @@
+"""Classes for assembling actual Cryptid boards."""
+
 from collections import namedtuple
 
 import hextools
@@ -30,7 +32,7 @@ STRUCTURES = [
 ]
 
 
-class Hex():  # pylint: disable=too-few-public-methods
+class Hex:  # pylint: disable=too-few-public-methods
     """Holder class for information on a hexagon.
     Chosen over namedtuple for mutability.
 
@@ -123,7 +125,7 @@ def assemble_board(arrangement, structures):
     main_board.extend(boards[4], 1)
 
     for pos, struct in zip(structures, STRUCTURES):
-        tile = main_board.gethex(hextools.array_to_axial(*pos))
+        tile = main_board.gethex(pos)
         tile.structure = struct
 
     return main_board
