@@ -1,4 +1,4 @@
-"""Classes for assembling actual Cryptid boards."""
+"""Classes for assembling actual Cryptid boards.""" # pylint: disable=no-member
 
 from collections import namedtuple
 
