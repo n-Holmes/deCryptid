@@ -9,3 +9,6 @@
 
 # Pytest
 .pytest_cache
+
+# Sublime
+*.sublime*

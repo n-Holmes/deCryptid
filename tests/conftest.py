@@ -59,5 +59,11 @@ def game_with_plays(board_known):
     for _ in range(2):
         for player in game.players:
             player.play_random(False)
+    for _ in range(10):
+        for player in game.players:
+            player.play_random(True)
+    for _ in range(2):
+        for player in game.players:
+            player.play_random(False)
 
     return game

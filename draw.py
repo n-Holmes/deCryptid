@@ -23,7 +23,7 @@ COLORS = {
     'p2': '#cf2537',
     'p3': '#f5a044',
     'p4': '#44b6f4',
-    'p5': '#',
+    'p5': '#55db53', # Chose a new color here to avoid player similarity
 }
 
 
@@ -121,7 +121,6 @@ def draw_components(drawer, center, scale, tile):
     # Draw any structure on the tile
     if tile.structure is not None:
         struct, color = tile.structure
-
         border = 'white' if color == 'black' else 'black'
 
         if struct == 'shack':
@@ -145,9 +144,36 @@ def draw_components(drawer, center, scale, tile):
                       rotation=cmath.pi / 8,
                       )
 
-    player_count = len(tile.players)
-    for player, truth in enumerate(tile.players):
-        pass
+    player_count = len(tile.players) - tile.players.count(None)
+    if player_count:
+        draw_width = 0.4 * scale * (player_count - 1)
+        used_count = 0
+        for player, truth in enumerate(tile.players):
+            if truth is not None:
+                x, y = center
+                x += used_count * 0.4 * scale - draw_width / 2
+                y -= 0.15 * scale
+
+                used_count += 1
+
+                if truth:
+                    draw_poly(drawer,
+                              center=(x, y),
+                              sides=20,
+                              scale=int(0.3 * scale),
+                              color=COLORS[f'p{player + 1}'],
+                              #border=COLORS['black'],
+                              )
+                else:
+                    draw_poly(drawer,
+                              center=(x, y),
+                              sides=4,
+                              scale=int(0.3 * scale),
+                              color=COLORS[f'p{player + 1}'],
+                              #border=COLORS['black'],
+                              rotation=cmath.pi / 4,
+                              )
+
 
 
 def draw_board(grid, scale, path):
