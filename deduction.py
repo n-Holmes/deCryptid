@@ -15,6 +15,8 @@ class Game:
         board: hextools.HexGrid object populated by gameboard.Hex objects.
             Contains all of the setup information
         player_count: Integer number of players (3, 4 or 5).
+        known_clues: If Some clues are known by players, pass them in
+            as an array.
     """
 
     def __init__(self, board, player_count, known_clues=None):

@@ -1,10 +1,12 @@
 import pytest
 
 import gameboard
+import deduction
 
 
 @pytest.fixture
-def board():
+def board_advanced():
+    """Returns a valid advanced Cryptid board."""
     boardstring = '1r42635'
     structures = ((4, -1), (3, 7), (10, 2), (0, 3),
                   (9, -4), (5, 1), (0, 4), (2, 4))
@@ -14,12 +16,13 @@ def board():
              'not within three spaces of a blue structure']
     solution = (9, 8)
 
-    game = gameboard.assemble_board(boardstring, structures)
-    return game
+    board = gameboard.assemble_board(boardstring, structures)
+    return board
 
 
 @pytest.fixture
 def board_basic():
+    """Returns a valid basic Cryptid board."""
     boardstring = '31r254r6r'
     structures = ((4, 2), (4, 1), (9, -3), (7, 5), (4, -2), (1, 6))
     clues = ['within two spaces of a shack',
@@ -28,11 +31,12 @@ def board_basic():
              'within three spaces of a green structure']
     solution = (6, -1)
 
-    game = gameboard.assemble_board(boardstring, structures)
-    return game
+    board = gameboard.assemble_board(boardstring, structures)
+    return board
 
 @pytest.fixture
 def board_known():
+    """Returns a valid advanced Cryptid board with the clues for each player."""
     boardstring = '1r42635'
     structures = ((4, -1), (3, 7), (10, 2), (0, 3),
                   (9, -4), (5, 1), (0, 4), (2, 4))
@@ -42,5 +46,18 @@ def board_known():
              'not within three spaces of a blue structure']
     solution = (9, 8)
 
-    game = gameboard.assemble_board(boardstring, structures)
-    return game, clues
+    board = gameboard.assemble_board(boardstring, structures)
+    return board, clues
+
+@pytest.fixture
+def game_with_plays(board_known):
+    """Creates a deduction.Game object with initial negative plays."""
+
+    board, clues = board_known
+    game = deduction.Game(board, 4, known_clues=clues)
+
+    for _ in range(2):
+        for player in game.players:
+            player.play_random(False)
+
+    return game

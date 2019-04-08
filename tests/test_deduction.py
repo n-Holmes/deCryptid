@@ -6,13 +6,13 @@ import deduction
 
 
 @pytest.mark.deduce
-def test_clue_count_advanced(board):
+def test_clue_count_advanced(board_advanced):
     """Check for correct clue count on advanced board.
     Given an advanced board,
     When setting up a Game object,
     Then 48 clues should be generated.
     """
-    game = deduction.Game(board, 4)
+    game = deduction.Game(board_advanced, 4)
     assert(len(game.clues)) == 48
 
 
