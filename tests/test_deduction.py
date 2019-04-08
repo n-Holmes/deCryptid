@@ -37,11 +37,17 @@ def test_random_plays(board_known):
     game = deduction.Game(board, 4, known_clues=clues)
 
     for player in game.players:
-        assert(player.known_clue is not None)
+        assert player.known_clue is not None
 
     # Make random plays
     for _ in range(2):
         for player in game.players:
             player.play_random()
 
-    assert(len([play for play in player.negatives for player in game.players])) == 8
+    # Make random positive plays
+    for player in game.players:
+        player.play_random(True)
+
+    assert len([play for play in player.negatives for player in game.players]) == 8
+    assert len([play for play in player.positives for player in game.players]) == 4
+    assert len([clue for clue in player.clues for player in game.players]) < 97

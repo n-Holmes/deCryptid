@@ -59,41 +59,29 @@ class Game:
             if tile.animal is not None:
                 self.animals[tile.animal].add(pos)
 
-        # Pair of terrains
+        # Pairs of terrains
         for trn_1, trn_2 in combinations(self.terrains, 2):
             clue = f'on {trn_1} or {trn_2}'
             self.clues[clue] = self.terrains[trn_1] | self.terrains[trn_2]
 
-        # Within 1 of a terrain
+        self.clues[
+            'within one space of either animal territory'
+        ] = hextools.expand(self.animals['bear'] | self.animals['cougar'], 1)
+
         for terrain, region in self.terrains.items():
-            clue = f'within one space of a {terrain}'
-            self.clues[clue] = hextools.expand(region, 1)
+            self._add_clue(region, expansion=1, name=terrain)
 
-        # Within 1 of animals
-        clue = 'within one space of either animal territory'
-        region = set()
-        for animal, region in self.animals.items():
-            region |= region
-        self.clues[clue] = hextools.expand(region, 1)
-
-        # Within 2 of structure type
         for struct, region in self.structures.items():
-            clue = f'within two spaces of a {struct}'
-            self.clues[clue] = hextools.expand(region, 2)
+            self._add_clue(region, expansion=2, name=struct)
 
-        # Within 2 of animal type
         for animal, region in self.animals.items():
-            clue = f'within two spaces of {animal} territory'
-            self.clues[clue] = hextools.expand(region, 2)
+            self._add_clue(region, expansion=2, name=f'{animal} territory')
 
-        # Within 3 of structure color
         for color, region in self.colors.items():
-            # May not be any black structures (basic game)
+            # There may not be any black structures (basic game)
             if not region:
                 continue
-
-            clue = f'within three spaces of a {color} structure'
-            self.clues[clue] = hextools.expand(region, 3)
+            self._add_clue(region, expansion=3, name=f'{color} structure')
 
         # Restrict all clues to the board
         for clue in self.clues:
@@ -105,6 +93,11 @@ class Game:
             for clue, tiles in positives:
                 negation = 'not ' + clue
                 self.clues[negation] = self.tile_set - tiles
+
+    def _add_clue(self, region, expansion, name):
+        dist = {1: 'one space', 2: 'two spaces', 3: 'three spaces'}
+        clue = f'within {dist[expansion]} of a {name}'
+        self.clues[clue] = hextools.expand(region, expansion)
 
 
 class Player:
