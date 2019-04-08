@@ -2,9 +2,7 @@
 
 import pytest
 
-import gameboard
 import draw
-import hextools
 
 
 @pytest.mark.drawing
