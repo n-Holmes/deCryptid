@@ -44,24 +44,18 @@ def board_known():
              'not within one space of a desert',
              'on water or desert',
              'not within three spaces of a blue structure']
-    solution = (9, 8)
+    solution = (9, 4)
 
     board = gameboard.assemble_board(boardstring, structures)
-    return board, clues
+    return board, clues, solution
 
 @pytest.fixture
 def game_with_plays(board_known):
     """Creates a deduction.Game object with initial negative plays."""
 
-    board, clues = board_known
+    board, clues, _ = board_known
     game = deduction.Game(board, 4, known_clues=clues)
 
-    for _ in range(2):
-        for player in game.players:
-            player.play_random(False)
-    for _ in range(10):
-        for player in game.players:
-            player.play_random(True)
     for _ in range(2):
         for player in game.players:
             player.play_random(False)

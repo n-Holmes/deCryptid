@@ -1,7 +1,7 @@
 """Deduction logic and classes for maintaining/updating game state."""
 
 
-from itertools import combinations
+from itertools import combinations, product
 import random
 
 from gameboard import ANIMALS, STRUCTURES, TERRAINS
@@ -101,6 +101,73 @@ class Game:
         clue = f'within {dist[expansion]} of a {name}'
         self.clues[clue] = hextools.expand(region, expansion)
 
+    def solve(self, clue_list):
+        """Given a list of clue names, find the unique position on the board
+        which satisfies all of them.
+
+        Args:
+            clue_list: A list of clue names.
+
+        Returns:
+            The cubic coordinates of a hex on the map satisfting all clues.
+
+        Raises:
+            ValueError: clue_list must contain unique clues.
+            IncompatibleCluesError: If the list of clues does not specify
+                a unique hex.
+        """
+        if len(set(clue_list)) != len(clue_list):
+            raise ValueError("Clues must be different")
+
+        region = set.intersection(*[self.clues[clue] for clue in clue_list])
+
+        if len(region) != 1:
+            raise IncompatibleCluesError(
+                f'Clues: {", ".join(clue_list)} give region {region}.'
+            )
+
+        return region.pop()
+
+    def solutions(self, *known_players):
+        """Find all possible solutions and their frequencies.
+
+        Args:
+            known_player: None, or iterable containing player numbers whose
+                clues are known (uses known_clue rather than clues).
+
+        Returns:
+            A list of possible solutions.
+        """
+
+        clue_sets = [player.clues for player in self.players]
+        for player in known_players:
+            if self.players[player].known_clue is None:
+                raise ValueError(f'Clue for player {player} is not known.')
+
+            clue_sets[player] = {self.players[player].known_clue}
+
+        # TODO: Clean up this code.  Multiple nested try-except blocks
+        #   seems like a bad idea
+        solutions = []
+        for clue_list in product(*clue_sets):
+            try:
+                # There must be a unique solution to the clue set
+                solution = self.solve(clue_list)
+                # All clues must be determinative on the solution
+                for sub_list in combinations(clue_list, len(clue_list) - 1):
+                    try:
+                        self.solve(sub_list)
+                        raise ValueError
+                    except IncompatibleCluesError:
+                        pass
+
+                solutions.append(solution)
+            except (ValueError, IncompatibleCluesError):
+                pass
+
+        return solutions
+
+
 
 class Player:
     """Stores information on the clues given by a player.
@@ -122,9 +189,6 @@ class Player:
         self.number = player_number
 
         if known_clue is not None and known_clue not in self.clues:
-            print('known', known_clue)
-            for clue in self.clues:
-                print(clue)
             raise ValueError("known_clue must be an element of clues")
         self.known_clue = known_clue
 
@@ -208,6 +272,10 @@ class Player:
             self.negatives.add(play)
 
         self.restrict_clues()
+
+
+class IncompatibleCluesError(Exception):
+    pass
 
 
 class UnknownClueError(Exception):

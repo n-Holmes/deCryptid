@@ -33,7 +33,7 @@ def test_random_plays(board_known):
     Given a board where all Players know their clues,
     Have all players take turns playing two random false pieces.
     """
-    board, clues = board_known
+    board, clues, _ = board_known
     game = deduction.Game(board, 4, known_clues=clues)
 
     for player in game.players:
@@ -51,3 +51,29 @@ def test_random_plays(board_known):
     assert len([play for play in player.negatives for player in game.players]) == 8
     assert len([play for play in player.positives for player in game.players]) == 4
     assert len([clue for clue in player.clues for player in game.players]) < 97
+
+
+
+@pytest.mark.deduce
+def test_unique_solution_with_known_clues(board_known):
+    """Check that Game.solutions returns the correct solution when all clues are known.
+    Given a game with all known clues and a solution,
+    When Game.solutions is called with all players in known_players,
+    Then the return should be a list with the only element being the solution.
+    """
+
+    board, clues, solution = board_known
+    game = deduction.Game(board, 4, known_clues=clues)
+
+    assert game.solutions(0, 1, 2, 3)[0][:2] == solution
+
+
+@pytest.mark.deduce
+def test_solution_with_plays(game_with_plays):
+    game = game_with_plays
+
+    observer_solutions = game.solutions()
+
+    assert len(observer_solutions) < 1000
+    assert len(game.solutions(0)) < len(observer_solutions)
+    assert len(game.solutions(0, 1, 2, 3)) == 1
