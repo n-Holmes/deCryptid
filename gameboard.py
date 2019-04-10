@@ -1,25 +1,16 @@
-"""Classes for assembling actual Cryptid boards.""" # pylint: disable=no-member
+"""Classes for assembling actual Cryptid boards."""  # pylint: disable=no-member
 
 from collections import namedtuple
 
 import hextools
 
-_BOARDS = [
-    None,
-    'WSSWSSWWDWDDbFFDbFFF',
-    'ScSSFcSMFcFMFDMFDMFDD',
-    'SScMcSScMFFMFMMFWWWWW',
-    'DDDDDDMMDMWFMWFMWcFc',
-    'SSDSDDSDWMWWMMWbMMbWb',
-    'DbMbMDMWSSWSSWSFWFFF'
-]
-
+# TODO: Make a Clue class for sanity when comparing.
 TERRAINS = {
+    'F': 'forest',
+    'D': 'desert',
     'W': 'water',
     'S': 'swamp',
-    'D': 'desert',
     'M': 'mountains',
-    'F': 'forest',
 }
 
 ANIMALS = {'b': 'bear', 'c': 'cougar'}
@@ -87,8 +78,22 @@ class Hex:  # pylint: disable=too-few-public-methods
             self.players[i] = truth
 
 
+def _static_boards(func):
+    """Decorator to allow for single initialization of the board strings."""
+    setattr(func, 'boards',
+            ['WSSWSSWWDWDDbFFDbFFF',
+             'ScSSFcSMFcFMFDMFDMFDD',
+             'SScMcSScMFFMFMMFWWWWW',
+             'DDDDDDMMDMWFMWFMWcFc',
+             'SSDSDDSDWMWWMMWbMMbWb',
+             'DbMbMDMWSSWSSWSFWFFF']
+            )
+    return func
+
+
+@_static_boards
 def _get_board(index):
-    board_string = _BOARDS[index]
+    board_string = _get_board.boards[index - 1]
     hex_list = []
 
     for char in board_string:
