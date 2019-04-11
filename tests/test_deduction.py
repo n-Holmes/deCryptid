@@ -42,11 +42,11 @@ def test_random_plays(board_known):
     # Make random plays
     for _ in range(2):
         for player in game.players:
-            player.play_random()
+            player.play(False, 'random')
 
     # Make random positive plays
     for player in game.players:
-        player.play_random(True)
+        player.play(True, 'random')
 
     assert len([play for play in player.negatives for player in game.players]) == 8
     assert len([play for play in player.positives for player in game.players]) == 4
@@ -77,3 +77,25 @@ def test_solution_with_plays(game_with_plays):
     assert len(set(observer_solutions)) < 100
     assert len(game.solutions(0)) < len(observer_solutions)
     assert len(game.solutions(0, 1, 2, 3)) == 1
+
+
+@pytest.mark.deduce
+def test_considered_play_better_than_random(board_known):
+    """Check that optimized plays result in better outcomes than random ones."""
+
+    board, clues, _ = board_known
+
+    game1 = deduction.Game(board, 4, known_clues=clues)
+    game2 = deduction.Game(board, 4, known_clues=clues)
+
+    for _ in range(2):
+        for player in game1.players:
+            player.play(False, 'random')
+
+        for player in game2.players:
+            player.play(False, 'cluecount')
+
+    observer1 = game1.solutions()
+    observer2 = game2.solutions()
+
+    assert len(observer1) < len(observer2)

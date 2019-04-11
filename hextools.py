@@ -19,10 +19,6 @@ OATRANSFORM = np.array([[2 / _ROOT3, 0], [-1 / _ROOT3, 1]])
 HSTRANSFORM = np.array([[0, 2], [2, -1]])
 
 
-class GridMutationError(Exception):
-    pass
-
-
 class HexGrid:
     """A rectangular grid of hexagons.
 
@@ -241,5 +237,9 @@ def expand(region, radius):
 
         reg_set |= new_set
         recent = new_set - recent
-        
+
     return reg_set
+
+
+class GridMutationError(Exception):
+    pass

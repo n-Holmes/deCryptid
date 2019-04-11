@@ -1,6 +1,6 @@
 """Deduction logic and classes for maintaining/updating game state."""
 
-
+from collections import defaultdict
 import itertools
 import random
 
@@ -180,9 +180,6 @@ class Player:
             if isinstance(known_clue, str):
                 known_clue = Clue(known_clue)
             if known_clue not in self.clues:
-                print('known:', known_clue)
-                for clue in self.clues:
-                    print(clue)
                 raise ValueError("known_clue must be an element of clues")
         self.known_clue = known_clue
 
@@ -227,13 +224,15 @@ class Player:
 
         self.restrict_clues()
 
-    def play_random(self, clue_type=False):
-        """Play a random, correct piece of the specified type.
+    def play(self, play_type, choice='random'):
+        """Play a correct piece of the specified type.
         If the player's clue is not known this should cause an error.
 
         Args:
-            clue_type: Boolean to determine whether the played piece
+            play_type: Boolean to determine whether the played piece
                 should be positive or negative.
+            choice: A string specifying how to choose where to play.
+                Options are 'random', 'cluecount'.
 
         Raises:
             UnknownClueError: If the player's clue is not known, then
@@ -244,7 +243,7 @@ class Player:
             raise UnknownClueError('Cannot play without known clue.')
 
         region = self.clues[self.known_clue]
-        if not clue_type:
+        if not play_type:
             region = self.game.tile_set - region
 
         possible_tiles = [
@@ -257,15 +256,36 @@ class Player:
         if not possible_tiles:
             raise NoLegalPlayError
 
-        play = random.choice(possible_tiles)
-        self.game.board.gethex(play).players[self.number] = clue_type
+        play_func = {
+            'random': self._play_random,
+            'cluecount': self._play_clue_count
+        }[choice]
+        play = play_func(possible_tiles, play_type)
 
-        if clue_type:
+        self.game.board.gethex(play).players[self.number] = play_type
+        if play_type:
             self.positives.add(play)
         else:
             self.negatives.add(play)
 
         self.restrict_clues()
+
+    def _play_random(self, possible_tiles, play_type):
+        """Make a random play."""
+
+        return random.choice(possible_tiles)
+
+    def _play_clue_count(self, possible_tiles, play_type):
+        """Make a play attempting to maximize the number of remaining
+        possible clues."""
+
+        clues_remaining = defaultdict(int)
+        for tile in possible_tiles:
+            for clue, region in self.clues.items():
+                if play_type == (tile in region):
+                    clues_remaining[tile] += 1
+
+        return max(clues_remaining, key=lambda t: clues_remaining[t])
 
 
 class Clue:
