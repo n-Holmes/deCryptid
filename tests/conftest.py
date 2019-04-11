@@ -10,10 +10,7 @@ def board_advanced():
     boardstring = '1r42635'
     structures = ((4, -1), (3, 7), (10, 2), (0, 3),
                   (9, -4), (5, 1), (0, 4), (2, 4))
-    clues = ['not within one space of a mountains',
-             'not within one space of a desert',
-             'on water or desert',
-             'not within three spaces of a blue structure']
+    clues = ['not,mountain', 'not,desert', 'water,desert', 'not,blue']
     solution = (9, 8)
 
     board = gameboard.assemble_board(boardstring, structures)
@@ -25,10 +22,7 @@ def board_basic():
     """Returns a valid basic Cryptid board."""
     boardstring = '31r254r6r'
     structures = ((4, 2), (4, 1), (9, -3), (7, 5), (4, -2), (1, 6))
-    clues = ['within two spaces of a shack',
-             'within three spaces of a white structure',
-             'on water or forest',
-             'within three spaces of a green structure']
+    clues = ['shack', 'white', 'water,forest', 'green']
     solution = (6, -1)
 
     board = gameboard.assemble_board(boardstring, structures)
@@ -40,10 +34,7 @@ def board_known():
     boardstring = '1r42635'
     structures = ((4, -1), (3, 7), (10, 2), (0, 3),
                   (9, -4), (5, 1), (0, 4), (2, 4))
-    clues = ['not within one space of a mountains',
-             'not within one space of a desert',
-             'on water or desert',
-             'not within three spaces of a blue structure']
+    clues = ['not,mountain', 'not,desert', 'water,desert', 'not,blue']
     solution = (9, 4)
 
     board = gameboard.assemble_board(boardstring, structures)

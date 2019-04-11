@@ -1,7 +1,7 @@
 """Deduction logic and classes for maintaining/updating game state."""
 
 
-from itertools import combinations, product
+import itertools
 import random
 
 from gameboard import ANIMALS, STRUCTURES, TERRAINS
@@ -30,10 +30,13 @@ class Game:
         self.board = board
         self.tile_set = {hextools.cubic(*pos) for pos, tile in self.board}
 
-        self.terrains = {terrain: set() for terrain in TERRAINS.values()}
-        self.animals = {animal: set() for animal in ANIMALS.values()}
-        self.structures = {struct: set() for struct, color in STRUCTURES}
-        self.colors = {color: set() for struct, color in STRUCTURES}
+        feature_names = []
+        feature_names.extend(TERRAINS.values())
+        feature_names.extend(ANIMALS.values())
+        feature_names.extend(struct for struct, color in STRUCTURES)
+        feature_names.extend(color for struct, color in STRUCTURES)
+
+        self.features = {name: set() for name in feature_names}
 
         self.clues = {}
         self._get_clues()
@@ -51,55 +54,42 @@ class Game:
         for pos, tile in self.board:
             pos = hextools.cubic(*pos)
 
-            self.terrains[tile.terrain].add(pos)
+            self.features[tile.terrain].add(pos)
 
             if tile.structure is not None:
                 struct, color = tile.structure
-                self.structures[struct].add(pos)
-                self.colors[color].add(pos)
+                self.features[struct].add(pos)
+                self.features[color].add(pos)
 
             if tile.animal is not None:
-                self.animals[tile.animal].add(pos)
+                self.features[tile.animal].add(pos)
 
-        # Pairs of terrains
-        for trn_1, trn_2 in combinations(self.terrains, 2):
-            clue = f'on {trn_1} or {trn_2}'
-            self.clues[clue] = self.terrains[trn_1] | self.terrains[trn_2]
+        for feature, region in self.features.items():
+            if region:
+                self._add_clue(region, feature)
 
-        self.clues[
-            'within one space of either animal territory'
-        ] = hextools.expand(self.animals['bear'] | self.animals['cougar'], 1)
+        self._add_clue(self.features['bear'] | self.features['cougar'],
+                       'bear,cougar')
 
-        for terrain, region in self.terrains.items():
-            self._add_clue(region, expansion=1, name=terrain)
-
-        for struct, region in self.structures.items():
-            self._add_clue(region, expansion=2, name=struct)
-
-        for animal, region in self.animals.items():
-            self._add_clue(region, expansion=2, name=f'{animal} territory')
-
-        for color, region in self.colors.items():
-            # There may not be any black structures (basic game)
-            if not region:
-                continue
-            self._add_clue(region, expansion=3, name=f'{color} structure')
+        # terrain pairs
+        for first, second in itertools.combinations(TERRAINS.values(), 2):
+            self._add_clue(self.features[first] | self.features[second],
+                           f'{first},{second}')
 
         # Restrict all clues to the board
         for clue in self.clues:
             self.clues[clue] = self.clues[clue] & self.tile_set
 
         # Negative clues if playing in advanced mode
-        if self.colors['black']:
+        if self.features['black']:
             positives = list(self.clues.items())
             for clue, tiles in positives:
-                negation = 'not ' + clue
+                negation = Clue(','.join(clue.features), negate=True)
                 self.clues[negation] = self.tile_set - tiles
 
-    def _add_clue(self, region, expansion, name):
-        dist = {1: 'one space', 2: 'two spaces', 3: 'three spaces'}
-        clue = f'within {dist[expansion]} of a {name}'
-        self.clues[clue] = hextools.expand(region, expansion)
+    def _add_clue(self, region, features):
+        clue = Clue(features)
+        self.clues[clue] = hextools.expand(region, clue.radius)
 
     def solve(self, clue_list):
         """Given a list of clue names, find the unique position on the board
@@ -122,9 +112,7 @@ class Game:
         region = set.intersection(*[self.clues[clue] for clue in clue_list])
 
         if len(region) != 1:
-            raise IncompatibleCluesError(
-                f'Clues: {", ".join(clue_list)} give region {region}.'
-            )
+            raise IncompatibleCluesError
 
         return region.pop()
 
@@ -149,12 +137,13 @@ class Game:
         # TODO: Clean up this code.  Multiple nested try-except blocks
         #   seems like a bad idea
         solutions = []
-        for clue_list in product(*clue_sets):
+        for clue_list in itertools.product(*clue_sets):
             try:
                 # There must be a unique solution to the clue set
                 solution = self.solve(clue_list)
                 # All clues must be determinative on the solution
-                for sub_list in combinations(clue_list, len(clue_list) - 1):
+                for sub_list in itertools.combinations(clue_list,
+                                                       len(clue_list) - 1):
                     try:
                         self.solve(sub_list)
                         raise ValueError
@@ -168,7 +157,6 @@ class Game:
         return solutions
 
 
-
 class Player:
     """Stores information on the clues given by a player.
 
@@ -177,8 +165,8 @@ class Player:
         player_number: Integer - which player this is.
         positives: Positions marked positive by the player.
         negatives: Positions marked negative by the player.
-        known_clue: Storage for the case that the clue is known.
-
+        known_clue: Clue object or string representing the known clue of the
+            player.
     """
 
     # pylint: disable=too-many-arguments
@@ -188,8 +176,14 @@ class Player:
         self.clues = game.clues.copy()
         self.number = player_number
 
-        if known_clue is not None and known_clue not in self.clues:
-            raise ValueError("known_clue must be an element of clues")
+        if known_clue is not None:
+            if isinstance(known_clue, str):
+                known_clue = Clue(known_clue)
+            if known_clue not in self.clues:
+                print('known:', known_clue)
+                for clue in self.clues:
+                    print(clue)
+                raise ValueError("known_clue must be an element of clues")
         self.known_clue = known_clue
 
         if positives is None:
@@ -272,6 +266,52 @@ class Player:
             self.negatives.add(play)
 
         self.restrict_clues()
+
+
+class Clue:
+    """Class to store a Player's clue.
+
+    Args:
+        features: A comma separated string of features contained in the clue.
+            If the first element of features is 'not', will force negation.
+        negate: A boolean.  If true, the clue is a negation. 'not' in features
+            overrides this
+    """
+
+    def __init__(self, features, negate=False):
+        self.features = features.split(',')
+        if self.features[0] == 'not':
+            self.features = self.features[1:]
+            self.negate = True
+        else:
+            self.negate = negate
+
+        self.features = tuple(sorted(self.features))
+
+        if self.features[0] in ANIMALS.values():
+            if len(self.features) == 2:
+                self.radius = 1
+            else:
+                self.radius = 2
+        elif self.features[0] in TERRAINS.values():
+            if len(self.features) == 2:
+                self.radius = 0
+            else:
+                self.radius = 1
+        elif self.features[0][0] == 's':  # Standing Stone or Shack
+            self.radius = 2
+        else:
+            self.radius = 3
+
+    def __eq__(self, other):
+        return self.features == other.features and self.negate == other.negate
+
+    def __hash__(self):
+        return hash((*self.features, self.negate))
+
+    def __repr__(self):
+        return (f'{self.__class__.__name__}(features={self.features},'
+                f' negate={self.negate}')
 
 
 class IncompatibleCluesError(Exception):

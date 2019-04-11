@@ -12,7 +12,7 @@ COLORS = {
     'water': '#1e7dbb',
     'swamp': '#3a173e',
     'desert': '#fecd0d',
-    'mountains': '#9a9899',
+    'mountain': '#9a9899',
     'forest': '#199239',
     'blue': '#3232e8',
     'green': '#009a00',

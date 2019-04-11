@@ -10,7 +10,7 @@ TERRAINS = {
     'D': 'desert',
     'W': 'water',
     'S': 'swamp',
-    'M': 'mountains',
+    'M': 'mountain',
 }
 
 ANIMALS = {'b': 'bear', 'c': 'cougar'}

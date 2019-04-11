@@ -74,6 +74,6 @@ def test_solution_with_plays(game_with_plays):
 
     observer_solutions = game.solutions()
 
-    assert len(observer_solutions) < 1000
+    assert len(set(observer_solutions)) < 100
     assert len(game.solutions(0)) < len(observer_solutions)
     assert len(game.solutions(0, 1, 2, 3)) == 1

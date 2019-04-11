@@ -1,7 +1,7 @@
 BoardString,GreenStone,GreenShack,WhiteStone,WhiteShack,BlueStone,BlueShack,BlackStone,BlackShack,Clue1,Clue2,Clue3,Clue4,Clue5
-32r5r6r1r4,6#2,5#2,11#-5,10#-2,10#1,3#-1,,,on forest or desert,within three spaces of a green structure,within two spaces of a cougar territory,,
-326r45r1,11#3,1#4,2#2,11#1,5#-1,1#0,3#2,2#4,not within three spaces of a white structure,within two spaces of a standing stone,not within two spaces of a cougar territory,,
-31r6r5r42r,5#0,10#-3,11#1,0#2,2#0,7#4,,,on forest or mountain,on desert or mountain,within one space of desert,within one space of forest,
-23r5r4r6r1,11#2,1#5,1#4,5#1,0#5,6#5,4#0,1#6,on water or desert,not within two spaces of a standing stone,on desert or mountain,within three spaces of a black structure,
-341r6r25,10#-5,6#-2,11#3,5#3,7#1,5#4,,,on water or desert,within one space of desert,within one space of mountain,on water or mountain,within one space of forest
-31r6r5r2r4,6#2,10#0,8#2,0#6,1#1,11#-2,7#5,11#-4,within one space of swamp,within two spaces of bear territory,on water or mountain,not within one space of forest,not within one space of water
+32r5r6r1r4,"6,2","5,2","11,-5","10,-2","10,1","3,-1",,,"forest,desert",green,cougar,,
+326r45r1,"11,3","1,4","2,2","11,1","5,-1","1,0","3,2","2,4","not,white",standing stone,"not,cougar",,
+31r6r5r42r,"5,0","10,-3","11,1","0,2","2,0","7,4",,,"forest,mountain","desert,mountain",desert,forest,
+23r5r4r6r1,"11,2","1,5","1,4","5,1","0,5","6,5","4,0","1,6","water,desert","not, standing stone","desert,mountain",black,
+341r6r25,"10,-5","6,-2","11,3","5,3","7,1","5,4",,,"water,desert",desert,mountain,"water,mountain",forest
+31r6r5r2r4,"6,2","10,0","8,2","0,6","1,1","11,-2","7,5","11,-4",swamp,bear,"water,mountain","not,forest","not,water"
