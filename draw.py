@@ -6,24 +6,24 @@ from PIL import Image, ImageDraw
 from hextools import AOTRANSFORM
 
 _R3 = 3 ** 0.5  # Square root of 3 precomputed for convenience
-_BLACK = '#000000'
+_BLACK = "#000000"
 
 COLORS = {
-    'water': '#1e7dbb',
-    'swamp': '#3a173e',
-    'desert': '#fecd0d',
-    'mountain': '#9a9899',
-    'forest': '#199239',
-    'blue': '#3232e8',
-    'green': '#009a00',
-    'white': '#ffffff',
-    'black': '#000000',
-    'red': '#b82222',
-    'p1': '#6b4cd1',
-    'p2': '#cf2537',
-    'p3': '#f5a044',
-    'p4': '#44b6f4',
-    'p5': '#55db53', # Chose a new color here to avoid player similarity
+    "water": "#1e7dbb",
+    "swamp": "#3a173e",
+    "desert": "#fecd0d",
+    "mountain": "#9a9899",
+    "forest": "#199239",
+    "blue": "#3232e8",
+    "green": "#009a00",
+    "white": "#ffffff",
+    "black": "#000000",
+    "red": "#b82222",
+    "p1": "#6b4cd1",
+    "p2": "#cf2537",
+    "p3": "#f5a044",
+    "p4": "#44b6f4",
+    "p5": "#55db53",  # Chose a new color here to avoid player similarity
 }
 
 
@@ -47,15 +47,15 @@ def draw_hex_grid(grid, scale, color_func, path, final_func=None):
 
     drawer = ImageDraw.Draw(image)
     for pos, tile in grid:
-        center = scale * (_R3 * np.dot(AOTRANSFORM, pos[:2]) +
-                          [1, _R3 / 2])
-        draw_poly(drawer,
-                  center=center,
-                  sides=6,
-                  scale=scale,
-                  color=color_func(tile),
-                  border=COLORS['white']
-                  )
+        center = scale * (_R3 * np.dot(AOTRANSFORM, pos[:2]) + [1, _R3 / 2])
+        draw_poly(
+            drawer,
+            center=center,
+            sides=6,
+            scale=scale,
+            color=color_func(tile),
+            border=COLORS["white"],
+        )
 
         if final_func is not None:
             final_func(drawer, center, scale, tile)
@@ -94,9 +94,7 @@ def draw_poly(drawer, center, sides, scale, color=None, border=None, rotation=0)
 
     if border is not None:
         for i in range(sides):
-            drawer.line(
-                (corners[i], corners[i + 1]), fill=border, width=(scale // 10)
-            )
+            drawer.line((corners[i], corners[i + 1]), fill=border, width=(scale // 10))
 
 
 def draw_components(drawer, center, scale, tile):
@@ -110,39 +108,42 @@ def draw_components(drawer, center, scale, tile):
     """
     # Draw any animal territories on the tile
     if tile.animal is not None:
-        animal_color = {'bear': 'black', 'cougar': 'red'}[tile.animal]
-        draw_poly(drawer,
-                  center=center,
-                  sides=6,
-                  scale=int(0.8 * scale),
-                  border=COLORS[animal_color],
-                  )
+        animal_color = {"bear": "black", "cougar": "red"}[tile.animal]
+        draw_poly(
+            drawer,
+            center=center,
+            sides=6,
+            scale=int(0.8 * scale),
+            border=COLORS[animal_color],
+        )
 
     # Draw any structure on the tile
     if tile.structure is not None:
         struct, color = tile.structure
-        border = 'white' if color == 'black' else 'black'
+        border = "white" if color == "black" else "black"
 
-        if struct == 'shack':
+        if struct == "shack":
             struct_center = [center[0], center[1] + 0.45 * scale]
-            draw_poly(drawer,
-                      center=struct_center,
-                      sides=3,
-                      scale=int(0.5 * scale),
-                      color=COLORS[color],
-                      border=COLORS[border],
-                      rotation=cmath.pi / 6,
-                      )
+            draw_poly(
+                drawer,
+                center=struct_center,
+                sides=3,
+                scale=int(0.5 * scale),
+                color=COLORS[color],
+                border=COLORS[border],
+                rotation=cmath.pi / 6,
+            )
         else:
             struct_center = [center[0], center[1] + 0.35 * scale]
-            draw_poly(drawer,
-                      center=struct_center,
-                      sides=8,
-                      scale=int(0.4 * scale),
-                      color=COLORS[color],
-                      border=COLORS[border],
-                      rotation=cmath.pi / 8,
-                      )
+            draw_poly(
+                drawer,
+                center=struct_center,
+                sides=8,
+                scale=int(0.4 * scale),
+                color=COLORS[color],
+                border=COLORS[border],
+                rotation=cmath.pi / 8,
+            )
 
     player_count = len(tile.players) - tile.players.count(None)
     if player_count:
@@ -157,27 +158,30 @@ def draw_components(drawer, center, scale, tile):
                 used_count += 1
 
                 if truth:
-                    draw_poly(drawer,
-                              center=(x, y),
-                              sides=20,
-                              scale=int(0.3 * scale),
-                              color=COLORS[f'p{player + 1}'],
-                              #border=COLORS['black'],
-                              )
+                    draw_poly(
+                        drawer,
+                        center=(x, y),
+                        sides=20,
+                        scale=int(0.3 * scale),
+                        color=COLORS[f"p{player + 1}"],
+                        # border=COLORS['black'],
+                    )
                 else:
-                    draw_poly(drawer,
-                              center=(x, y),
-                              sides=4,
-                              scale=int(0.3 * scale),
-                              color=COLORS[f'p{player + 1}'],
-                              #border=COLORS['black'],
-                              rotation=cmath.pi / 4,
-                              )
-
+                    draw_poly(
+                        drawer,
+                        center=(x, y),
+                        sides=4,
+                        scale=int(0.3 * scale),
+                        color=COLORS[f"p{player + 1}"],
+                        # border=COLORS['black'],
+                        rotation=cmath.pi / 4,
+                    )
 
 
 def draw_board(grid, scale, path):
     """Draws a cryptid board."""
+
     def color_map(tile):
         return COLORS[tile.terrain]
+
     draw_hex_grid(grid, scale, color_map, path, draw_components)

@@ -8,7 +8,7 @@ _ROOT3 = np.sqrt(3)
 
 # Transformation matrices to switch between coordinates.
 # Hexagonal to Rectangular
-HRTRANSFORM = np.array([[.5, .5], [0, 1]])
+HRTRANSFORM = np.array([[0.5, 0.5], [0, 1]])
 # Rectangular to Hexagonal
 RHTRANSFORM = np.array([[2, -1], [0, 1]])
 # Axial to Orthonormal
@@ -31,8 +31,7 @@ class HexGrid:
         scale: The length of a hexagon's side in orthonormal coordinates.
     """
 
-    def __init__(self, rows, columns, content=None,
-                 iterate_content=False, scale=1):
+    def __init__(self, rows, columns, content=None, iterate_content=False, scale=1):
         if not isinstance(rows, int) or not isinstance(columns, int):
             raise TypeError
 
@@ -41,15 +40,11 @@ class HexGrid:
                 raise ValueError("content has too few values.")
             cont_iter = iter(content)
             self._data = [
-                [next(cont_iter) for j in range(columns)]
-                for i in range(rows)
+                [next(cont_iter) for j in range(columns)] for i in range(rows)
             ]
 
         else:
-            self._data = [
-                [content for j in range(columns)]
-                for i in range(rows)
-            ]
+            self._data = [[content for j in range(columns)] for i in range(rows)]
 
         self.scale = scale
 
@@ -114,8 +109,7 @@ class HexGrid:
         """
 
         if len(self._data) % 2 == 0 and not ignore_dimension:
-            raise GridMutationError(
-                "Reflections should have an odd number of rows.")
+            raise GridMutationError("Reflections should have an odd number of rows.")
 
         self._data = self._data[::-1]
 
@@ -131,8 +125,7 @@ class HexGrid:
         """
 
         if len(self._data) % 2 and not ignore_dimension:
-            raise GridMutationError(
-                "Rotations should have an even number of rows.")
+            raise GridMutationError("Rotations should have an even number of rows.")
 
         self._data = [row[::-1] for row in self._data[::-1]]
 
@@ -148,7 +141,8 @@ class HexGrid:
 
         if other.dimensions[1 - axis] != self.dimensions[1 - axis]:
             raise ValueError(
-                "Dimensions of HexGrid objects must match in the non-stacking axis.")
+                "Dimensions of HexGrid objects must match in the non-stacking axis."
+            )
 
         if axis == 0:
             self._data.extend(other._data)  # pylint: disable=protected-access

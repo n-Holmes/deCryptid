@@ -13,7 +13,7 @@ def test_clue_count_advanced(board_advanced):
     Then 48 clues should be generated.
     """
     game = deduction.Game(board_advanced, 4)
-    assert(len(game.clues)) == 48
+    assert (len(game.clues)) == 48
 
 
 @pytest.mark.deduce
@@ -24,7 +24,7 @@ def test_clue_count_basic(board_basic):
     Then 23 clues should be generated.
     """
     game = deduction.Game(board_basic, 4)
-    assert(len(game.clues)) == 23
+    assert (len(game.clues)) == 23
 
 
 @pytest.mark.deduce
@@ -42,16 +42,15 @@ def test_random_plays(board_known):
     # Make random plays
     for _ in range(2):
         for player in game.players:
-            player.play(False, 'random')
+            player.play(False, "random")
 
     # Make random positive plays
     for player in game.players:
-        player.play(True, 'random')
+        player.play(True, "random")
 
     assert len([play for play in player.negatives for player in game.players]) == 8
     assert len([play for play in player.positives for player in game.players]) == 4
     assert len([clue for clue in player.clues for player in game.players]) < 97
-
 
 
 @pytest.mark.deduce
@@ -90,10 +89,10 @@ def test_considered_play_better_than_random(board_known):
 
     for _ in range(2):
         for player in game1.players:
-            player.play(False, 'random')
+            player.play(False, "random")
 
         for player in game2.players:
-            player.play(False, 'cluecount')
+            player.play(False, "cluecount")
 
     observer1 = game1.solutions()
     observer2 = game2.solutions()

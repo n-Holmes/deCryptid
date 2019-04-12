@@ -45,8 +45,7 @@ class Game:
             self.players = [Player(self, i) for i in range(player_count)]
         else:
             self.players = [
-                Player(self, i, known_clue=known_clues[i])
-                for i in range(player_count)
+                Player(self, i, known_clue=known_clues[i]) for i in range(player_count)
             ]
 
     def _get_clues(self):
@@ -68,23 +67,23 @@ class Game:
             if region:
                 self._add_clue(region, feature)
 
-        self._add_clue(self.features['bear'] | self.features['cougar'],
-                       'bear,cougar')
+        self._add_clue(self.features["bear"] | self.features["cougar"], "bear,cougar")
 
         # terrain pairs
         for first, second in itertools.combinations(TERRAINS.values(), 2):
-            self._add_clue(self.features[first] | self.features[second],
-                           f'{first},{second}')
+            self._add_clue(
+                self.features[first] | self.features[second], f"{first},{second}"
+            )
 
         # Restrict all clues to the board
         for clue in self.clues:
             self.clues[clue] = self.clues[clue] & self.tile_set
 
         # Negative clues if playing in advanced mode
-        if self.features['black']:
+        if self.features["black"]:
             positives = list(self.clues.items())
             for clue, tiles in positives:
-                negation = Clue(','.join(clue.features), negate=True)
+                negation = Clue(",".join(clue.features), negate=True)
                 self.clues[negation] = self.tile_set - tiles
 
     def _add_clue(self, region, features):
@@ -130,7 +129,7 @@ class Game:
         clue_sets = [player.clues for player in self.players]
         for player in known_players:
             if self.players[player].known_clue is None:
-                raise ValueError(f'Clue for player {player} is not known.')
+                raise ValueError(f"Clue for player {player} is not known.")
 
             clue_sets[player] = {self.players[player].known_clue}
 
@@ -142,8 +141,7 @@ class Game:
                 # There must be a unique solution to the clue set
                 solution = self.solve(clue_list)
                 # All clues must be determinative on the solution
-                for sub_list in itertools.combinations(clue_list,
-                                                       len(clue_list) - 1):
+                for sub_list in itertools.combinations(clue_list, len(clue_list) - 1):
                     try:
                         self.solve(sub_list)
                         raise ValueError
@@ -170,8 +168,9 @@ class Player:
     """
 
     # pylint: disable=too-many-arguments
-    def __init__(self, game, player_number, positives=None,
-                 negatives=None, known_clue=None):
+    def __init__(
+        self, game, player_number, positives=None, negatives=None, known_clue=None
+    ):
         self.game = game
         self.clues = game.clues.copy()
         self.number = player_number
@@ -224,7 +223,7 @@ class Player:
 
         self.restrict_clues()
 
-    def play(self, play_type, choice='random'):
+    def play(self, play_type, choice="random"):
         """Play a correct piece of the specified type.
         If the player's clue is not known this should cause an error.
 
@@ -240,7 +239,7 @@ class Player:
             NoLegalPlayError: If there are no legal positions to play in.
         """
         if self.known_clue is None:
-            raise UnknownClueError('Cannot play without known clue.')
+            raise UnknownClueError("Cannot play without known clue.")
 
         region = self.clues[self.known_clue]
         if not play_type:
@@ -256,10 +255,9 @@ class Player:
         if not possible_tiles:
             raise NoLegalPlayError
 
-        play_func = {
-            'random': self._play_random,
-            'cluecount': self._play_clue_count
-        }[choice]
+        play_func = {"random": self._play_random, "cluecount": self._play_clue_count}[
+            choice
+        ]
         play = play_func(possible_tiles, play_type)
 
         self.game.board.gethex(play).players[self.number] = play_type
@@ -281,7 +279,7 @@ class Player:
 
         clues_remaining = defaultdict(int)
         for tile in possible_tiles:
-            for clue, region in self.clues.items():
+            for region in self.clues.values():
                 if play_type == (tile in region):
                     clues_remaining[tile] += 1
 
@@ -299,8 +297,8 @@ class Clue:
     """
 
     def __init__(self, features, negate=False):
-        self.features = features.split(',')
-        if self.features[0] == 'not':
+        self.features = features.split(",")
+        if self.features[0] == "not":
             self.features = self.features[1:]
             self.negate = True
         else:
@@ -318,7 +316,7 @@ class Clue:
                 self.radius = 0
             else:
                 self.radius = 1
-        elif self.features[0][0] == 's':  # Standing Stone or Shack
+        elif self.features[0][0] == "s":  # Standing Stone or Shack
             self.radius = 2
         else:
             self.radius = 3
@@ -330,8 +328,10 @@ class Clue:
         return hash((*self.features, self.negate))
 
     def __repr__(self):
-        return (f'{self.__class__.__name__}(features={self.features},'
-                f' negate={self.negate}')
+        return (
+            f"{self.__class__.__name__}(features={self.features},"
+            f" negate={self.negate}"
+        )
 
 
 class IncompatibleCluesError(Exception):

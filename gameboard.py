@@ -5,21 +5,15 @@ from collections import namedtuple
 import hextools
 
 # TODO: Make a Clue class for sanity when comparing.
-TERRAINS = {
-    'F': 'forest',
-    'D': 'desert',
-    'W': 'water',
-    'S': 'swamp',
-    'M': 'mountain',
-}
+TERRAINS = {"F": "forest", "D": "desert", "W": "water", "S": "swamp", "M": "mountain"}
 
-ANIMALS = {'b': 'bear', 'c': 'cougar'}
+ANIMALS = {"b": "bear", "c": "cougar"}
 
-Structure = namedtuple('Structure', ['name', 'color'])
+Structure = namedtuple("Structure", ["name", "color"])
 STRUCTURES = [
     Structure(name, color)
-    for color in ('green', 'white', 'blue', 'black')
-    for name in ('standing stone', 'shack')
+    for color in ("green", "white", "blue", "black")
+    for name in ("standing stone", "shack")
 ]
 
 
@@ -33,7 +27,8 @@ class Hex:  # pylint: disable=too-few-public-methods
         structure: A Structure namedtuple or None.
         players: A 5-entry array to store player's clues.
     """
-    __slots__ = ['terrain', 'animal', 'structure', 'players']
+
+    __slots__ = ["terrain", "animal", "structure", "players"]
 
     def __init__(self, terrain, animal=None, structure=None, players=None):
         if len(terrain) == 1:
@@ -50,17 +45,17 @@ class Hex:  # pylint: disable=too-few-public-methods
             self.players = players
 
     def __str__(self):
-        parts = [f'Hex: {self.terrain}']
+        parts = [f"Hex: {self.terrain}"]
         if self.animal is not None:
-            parts.append(f'{self.animal} territory')
+            parts.append(f"{self.animal} territory")
         if self.structure is not None:
-            parts.append(f'{self.Structure.color} {self.structure.name}')
+            parts.append(f"{self.Structure.color} {self.structure.name}")
         if self.players is not None:
             for i, truth in enumerate(self.players, 1):
                 if truth is not None:
-                    parts.append(f'player {i}: {truth}')
+                    parts.append(f"player {i}: {truth}")
 
-        return ''.join(parts)
+        return "".join(parts)
 
     def play(self, player, truth):
         """Play a single marker"""
@@ -80,14 +75,18 @@ class Hex:  # pylint: disable=too-few-public-methods
 
 def _static_boards(func):
     """Decorator to allow for single initialization of the board strings."""
-    setattr(func, 'boards',
-            ['WSSWSSWWDWDDbFFDbFFF',
-             'ScSSFcSMFcFMFDMFDMFDD',
-             'SScMcSScMFFMFMMFWWWWW',
-             'DDDDDDMMDMWFMWFMWcFc',
-             'SSDSDDSDWMWWMMWbMMbWb',
-             'DbMbMDMWSSWSSWSFWFFF']
-            )
+    setattr(
+        func,
+        "boards",
+        [
+            "WSSWSSWWDWDDbFFDbFFF",
+            "ScSSFcSMFcFMFDMFDMFDD",
+            "SScMcSScMFFMFMMFWWWWW",
+            "DDDDDDMMDMWFMWFMWcFc",
+            "SSDSDDSDWMWWMMWbMMbWb",
+            "DbMbMDMWSSWSSWSFWFFF",
+        ],
+    )
     return func
 
 
@@ -117,7 +116,7 @@ def assemble_board(arrangement, structures):
 
     boards = []
     for char in arrangement:
-        if char == 'r':
+        if char == "r":
             boards[-1].rotate()
         else:
             boards.append(_get_board(int(char)))
