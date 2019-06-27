@@ -1,6 +1,6 @@
 """Deduction logic and classes for maintaining/updating game state."""
 
-from collections import defaultdict
+from collections import Counter
 import itertools
 import random
 
@@ -277,13 +277,16 @@ class Player:
         """Make a play attempting to maximize the number of remaining
         possible clues."""
 
-        clues_remaining = defaultdict(int)
-        for tile in possible_tiles:
-            for region in self.clues.values():
-                if play_type == (tile in region):
-                    clues_remaining[tile] += 1
+        remaining = Counter(self.game.tile_set)
+        for region in self.clues.values():
+            remaining.update(region)
 
-        return max(clues_remaining, key=lambda t: clues_remaining[t])
+        if play_type:
+            key = lambda p: remaining[p]
+        else:
+            key = lambda p: -remaining[p]
+
+        return max(possible_tiles, key=key)
 
 
 class Clue:

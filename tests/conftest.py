@@ -49,6 +49,6 @@ def game_with_plays(board_known):
 
     for _ in range(2):
         for player in game.players:
-            player.play(False, "random")
+            player.play(False, "cluecount")
 
     return game
