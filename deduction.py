@@ -1,11 +1,13 @@
 """Deduction logic and classes for maintaining/updating game state."""
 
-from collections import Counter
+from collections import Counter, namedtuple
 import itertools
 import random
 
 from gameboard import ANIMALS, STRUCTURES, TERRAINS
 import hextools
+
+Plays = namedtuple("Plays", ["negatives", "positives", "all"])
 
 
 class Game:
@@ -21,14 +23,15 @@ class Game:
 
     def __init__(self, board, player_count, known_clues=None):
         if not isinstance(board, hextools.HexGrid):
-            raise TypeError("board must be an instance of hextools.HexGrid.")
+            raise TypeError("board must be an instance of hextools.HexGrid")
         if not isinstance(player_count, int):
-            raise TypeError("player_count must be an int.")
+            raise TypeError("player_count must be an int")
         if player_count not in (3, 4, 5):
             raise ValueError("player_count must be be between 3 and 5.")
 
         self.board = board
         self.tile_set = {hextools.cubic(*pos) for pos, tile in self.board}
+        self.active_tiles = self.tile_set.copy()
 
         feature_names = []
         feature_names.extend(TERRAINS.values())
@@ -65,13 +68,13 @@ class Game:
 
         for feature, region in self.features.items():
             if region:
-                self._add_clue(region, feature)
+                self._add_play(region, feature)
 
-        self._add_clue(self.features["bear"] | self.features["cougar"], "bear,cougar")
+        self._add_play(self.features["bear"] | self.features["cougar"], "bear,cougar")
 
         # terrain pairs
         for first, second in itertools.combinations(TERRAINS.values(), 2):
-            self._add_clue(
+            self._add_play(
                 self.features[first] | self.features[second], f"{first},{second}"
             )
 
@@ -86,7 +89,7 @@ class Game:
                 negation = Clue(",".join(clue.features), negate=True)
                 self.clues[negation] = self.tile_set - tiles
 
-    def _add_clue(self, region, features):
+    def _add_play(self, region, features):
         clue = Clue(features)
         self.clues[clue] = hextools.expand(region, clue.radius)
 
@@ -119,7 +122,7 @@ class Game:
         """Find all possible solutions and their frequencies.
 
         Args:
-            known_player: None, or iterable containing player numbers whose
+            known_players: None, or iterable containing player numbers whose
                 clues are known (uses known_clue rather than clues).
 
         Returns:
@@ -174,6 +177,10 @@ class Player:
         self.game = game
         self.clues = game.clues.copy()
         self.number = player_number
+        self._strategies = {
+            "random": self._play_random,
+            "cluecount": self._play_clue_count,
+        }
 
         if known_clue is not None:
             if isinstance(known_clue, str):
@@ -182,25 +189,18 @@ class Player:
                 raise ValueError("known_clue must be an element of clues")
         self.known_clue = known_clue
 
-        if positives is None:
-            self.positives = set()
-        else:
-            self.positives = set(positives)
-
-        if negatives is None:
-            self.negatives = set()
-        else:
-            self.negatives = set(negatives)
+        self.plays = Plays(set(negatives or []), set(positives or []), set())
+        self.plays.all.update(self.plays.negatives | self.plays.positives)
 
         self.restrict_clues()
 
     def restrict_clues(self):
-        """Restrict clue set to match positives and negatives.
-        Ignores known_clue as storing publicly available knowledge is useful.
+        """Restrict the player's possible clue set based on given clues.
+        Disregards `self.known_clue` as that is not externally available information.
         """
         removals = []
         for clue, region in self.clues.items():
-            if self.negatives & region or self.positives - region:
+            if self.plays.negatives & region or self.plays.positives - region:
                 removals.append(clue)
 
         for clue in removals:
@@ -209,28 +209,26 @@ class Player:
         if len(self.clues) == 1:
             self.known_clue = list(self.clues)[0]
 
-    def add_clue(self, position, clue_type):
+    def add_play(self, position, play_type):
         """Update the player state given a new clue.
 
         Args:
             position: The position that the clue was given at.
-            clue_type: Boolean, True for a positive clue, False for negative.
+            play_type: Boolean, True for a positive clue, False for negative.
         """
-        if clue_type:
-            self.positives.add(position)
-        else:
-            self.negatives.add(position)
-
+        self.plays[play_type].add(position)
+        self.plays.all.add(position)
+        self.game.active_tiles.remove(position)
         self.restrict_clues()
 
-    def play(self, play_type, choice="random"):
+    def play(self, play_type, strategy="random"):
         """Play a correct piece of the specified type.
         If the player's clue is not known this should cause an error.
 
         Args:
             play_type: Boolean to determine whether the played piece
                 should be positive or negative.
-            choice: A string specifying how to choose where to play.
+            strategy: A string specifying how to choose where to play.
                 Options are 'random', 'cluecount'.
 
         Raises:
@@ -243,28 +241,18 @@ class Player:
 
         region = self.clues[self.known_clue]
         if not play_type:
-            region = self.game.tile_set - region
+            region = self.game.active_tiles - region
 
-        possible_tiles = [
-            tile
-            for tile in region
-            if False not in self.game.board.gethex(tile).players
-            # Negative clue locks space
-            and tile not in self.positives | self.negatives
-        ]
+        possible_tiles = list(region & self.game.active_tiles)
         if not possible_tiles:
             raise NoLegalPlayError
 
-        play_func = {"random": self._play_random, "cluecount": self._play_clue_count}[
-            choice
-        ]
-        play = play_func(possible_tiles, play_type)
+        play = self._strategies[strategy](possible_tiles, play_type)
 
         self.game.board.gethex(play).players[self.number] = play_type
-        if play_type:
-            self.positives.add(play)
-        else:
-            self.negatives.add(play)
+        self.game.active_tiles.remove(play)
+        self.plays[play_type].add(play)
+        self.plays.all.add(play)
 
         self.restrict_clues()
 
@@ -281,12 +269,8 @@ class Player:
         for region in self.clues.values():
             remaining.update(region)
 
-        if play_type:
-            key = lambda p: remaining[p]
-        else:
-            key = lambda p: -remaining[p]
-
-        return max(possible_tiles, key=key)
+        sign = -1 + 2 * play_type
+        return max(possible_tiles, key=lambda p: sign * remaining[p])
 
 
 class Clue:

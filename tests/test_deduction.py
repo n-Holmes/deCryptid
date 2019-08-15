@@ -48,8 +48,8 @@ def test_random_plays(board_known):
     for player in game.players:
         player.play(True, "random")
 
-    assert len([play for play in player.negatives for player in game.players]) == 8
-    assert len([play for play in player.positives for player in game.players]) == 4
+    assert len([play for play in player.plays.negatives for player in game.players]) == 8
+    assert len([play for play in player.plays.positives for player in game.players]) == 4
     assert len([clue for clue in player.clues for player in game.players]) < 97
 
 
